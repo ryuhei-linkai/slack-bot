@@ -55,11 +55,23 @@ export async function updateChannelConfig(
 
 export async function getAllChannelConfigs(): Promise<ChannelConfig[]> {
   const redis = getRedis();
-  const keys = await redis.keys("channel_config:*");
-  if (keys.length === 0) return [];
+
+  // Use scan instead of keys (keys command is disabled on Upstash by default)
+  const allKeys: string[] = [];
+  let cursor = "0";
+  do {
+    const result = await redis.scan(Number(cursor), {
+      match: "channel_config:*",
+      count: 100,
+    });
+    cursor = String(result[0]);
+    allKeys.push(...result[1]);
+  } while (cursor !== "0");
+
+  if (allKeys.length === 0) return [];
 
   const pipeline = redis.pipeline();
-  for (const key of keys) {
+  for (const key of allKeys) {
     pipeline.get(key);
   }
   const results = await pipeline.exec<(ChannelConfig | null)[]>();
