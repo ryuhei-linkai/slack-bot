@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllChannelConfigs, updateChannelConfig } from "@/lib/store/channel-config";
 import { getSummaryHistory } from "@/lib/store/conversation-cache";
+import { verifySession } from "@/app/api/dashboard/login/route";
 
 function verifyAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.DASHBOARD_SECRET}`;
+  return verifySession(request);
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
